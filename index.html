@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Splitter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bill Splitter</h1>
+    <div id="peopleContainer">
+        <div class="person">
+            <h3>Person 1</h3>
+            <div class="items">
+                <div class="item">
+                    <input type="text" placeholder="Item name" class="itemName">
+                    <input type="number" placeholder="Price" step="0.01" min="0" class="itemPrice">
+                    <button onclick="removeItem(this)">Remove</button>
+                </div>
+            </div>
+            <button onclick="addItem(this)">Add Item</button>
+        </div>
+    </div>
+    <button onclick="addPerson()">Add Person</button>
+    <div>
+        <label for="tipPercentage">Tip Percentage:</label>
+        <input type="number" id="tipPercentage" min="0" max="100" value="15">
+    </div>
+    <button onclick="calculateSplit()">Calculate Split</button>
+    <div id="result"></div>
+
+    <script>
+        let personCount = 1;
+
+        function addPerson() {
+            personCount++;
+            const personDiv = document.createElement('div');
+            personDiv.className = 'person';
+            personDiv.innerHTML = `
+                <h3>Person ${personCount}</h3>
+                <div class="items">
+                    <div class="item">
+                        <input type="text" placeholder="Item name" class="itemName">
+                        <input type="number" placeholder="Price" step="0.01" min="0" class="itemPrice">
+                        <button onclick="removeItem(this)">Remove</button>
+                    </div>
+                </div>
+                <button onclick="addItem(this)">Add Item</button>
+            `;
+            document.getElementById('peopleContainer').appendChild(personDiv);
+        }
+
+        function addItem(button) {
+            const itemsDiv = button.previousElementSibling;
+            const newItem = document.createElement('div');
+            newItem.className = 'item';
+            newItem.innerHTML = `
+                <input type="text" placeholder="Item name" class="itemName">
+                <input type="number" placeholder="Price" step="0.01" min="0" class="itemPrice">
+                <button onclick="removeItem(this)">Remove</button>
+            `;
+            itemsDiv.appendChild(newItem);
+        }
+
+        function removeItem(button) {
+            button.parentElement.remove();
+        }
+
+        function calculateSplit() {
+            const tipPercentage = parseFloat(document.getElementById('tipPercentage').value);
+            const resultDiv = document.getElementById('result');
+            
+            if (isNaN(tipPercentage) || tipPercentage < 0) {
+                resultDiv.textContent = 'Please enter a valid tip percentage.';
+                return;
+            }
+
+            let totalBill = 0;
+            const personTotals = {};
+
+            document.querySelectorAll('.person').forEach((personDiv, index) => {
+                const personName = `Person ${index + 1}`;
+                let personTotal = 0;
+
+                personDiv.querySelectorAll('.item').forEach(item => {
+                    const itemPrice = parseFloat(item.querySelector('.itemPrice').value);
+                    if (!isNaN(itemPrice) && itemPrice > 0) {
+                        personTotal += itemPrice;
+                        totalBill += itemPrice;
+                    }
+                });
+
+                personTotals[personName] = personTotal;
+            });
+
+            const tipAmount = totalBill * (tipPercentage / 100);
+            const totalWithTip = totalBill + tipAmount;
+
+            let resultHTML = `
+                <h3>Bill Summary</h3>
+                <p>Subtotal: $${totalBill.toFixed(2)}</p>
+                <p>Tip (${tipPercentage}%): $${tipAmount.toFixed(2)}</p>
+                <p>Total (including tip): $${totalWithTip.toFixed(2)}</p>
+                <h3>Individual Breakdown:</h3>
+            `;
+
+            for (const [person, subtotal] of Object.entries(personTotals)) {
+                const personTip = (subtotal / totalBill) * tipAmount;
+                const personTotal = subtotal + personTip;
+                resultHTML += `
+                    <p>${person}:</p>
+                    <ul>
+                        <li>Subtotal: $${subtotal.toFixed(2)}</li>
+                        <li>Share of tip: $${personTip.toFixed(2)}</li>
+                        <li>Total: $${personTotal.toFixed(2)}</li>
+                    </ul>
+                `;
+            }
+
+            resultDiv.innerHTML = resultHTML;
+        }
+    </script>
+</body>
+</html>
